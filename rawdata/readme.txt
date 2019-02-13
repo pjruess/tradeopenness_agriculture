@@ -29,6 +29,8 @@ Climate Variables (World Bank)... ?????
 Source: http://data.worldbank.org/indicator
 Data: Latitude, Temperature (annual average), Precipitation (annual average)
 
-
-Agricultural Variables (FAOSTAT)... ?????
-Source: 
+Agricultural Variables (FAOSTAT)
+Source: http://www.fao.org/faostat/en/#data/QC
+Data: Area Harvested, Yield, Production Quantity (Period: 1961-2017)
+Production_Crops_E_All_Data.csv
+Units: Area Harvested: Hectares, Yield: Hectogramme/Hectare, Production Quantity: Tonnes 
