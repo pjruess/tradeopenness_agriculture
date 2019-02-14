@@ -14,9 +14,9 @@ FOLDERS
 
 SCRIPTS
 'collect_data.r': collects data (from 'rawdata'), cleans it (saved to 'cleandata'), then compiles it (saved to 'results')
-'make_reg_plots.r': plots regression variables against each other for final paper
-'make_reg_tables': generates LaTeX regression tables for final paper
-'stage_1_reg_1.r': first stage, first regression, to calculated constructed trade openness
-'stage_1_reg_2.r': first stage, second regression, to calculate estimated trade openness
+'reg_plots.r': plots regression variables against each other for final paper
+'reg_tables': generates LaTeX regression tables for final paper
+'stage_0.r': preliminary regression, to calculated constructed trade openness
+'stage_1.r': first stage, to calculate estimated trade openness
 'stage_2.r': second stage, to calculate impact on variables of interest
 

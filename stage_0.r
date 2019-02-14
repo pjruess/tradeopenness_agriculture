@@ -1,5 +1,5 @@
 # Causal Effect of Trade Openness on Agricultural Variables
-# STAGE 1, REGRESSION 1:
+# STAGE 0:
 # Constructed trade openness
 # Akshay Pandit & Paul J. Ruess
 # Spring 2019
@@ -21,4 +21,4 @@ df <- read.csv('results/input_data_clean.csv') # all input data (from collect_da
 
 
 # Save as new .csv file
-df.to_csv('results/stage_1_reg_1_results.csv')
+df.to_csv('results/stage_0_results.csv')
