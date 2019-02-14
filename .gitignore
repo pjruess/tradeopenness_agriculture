@@ -2,4 +2,4 @@
 #archive/
 #literature/
 .RData
-.RHistory
+.Rhistory
