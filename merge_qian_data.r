@@ -1,0 +1,7 @@
+df1 <- read.csv('cleandata/main_control_0708.csv')
+df1$iso_o <- df1$ISO
+df2 <- read.csv('cleandata/main_df1_0621.csv')
+
+df <- merge(df1,df2)
+
+write.csv(df,'cleandata/qian_alldata.csv')
