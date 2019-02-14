@@ -1,3 +1,5 @@
 # Ignore folders
 #archive/
 #literature/
+.RData
+.RHistory
