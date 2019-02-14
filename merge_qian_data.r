@@ -4,4 +4,4 @@ df2 <- read.csv('cleandata/main_df1_0621.csv')
 
 df <- merge(df1,df2)
 
-write.csv(df,'cleandata/qian_alldata.csv')
+write.csv(df,'cleandata/qian_alldata.csv',row.names=FALSE)
