@@ -13,7 +13,7 @@ FOLDERS
 'results': all results from scripts, intermittend and final data
 
 SCRIPTS
-'collect_data.r': collects data (from 'rawdata'), cleans it (saved to 'cleandata'), then compiles it (saved to 'results')
+'clean_data.r': collects data (from 'rawdata'), cleans it (saved to 'cleandata'), then compiles it (saved to 'results')
 'reg_plots.r': plots regression variables against each other for final paper
 'reg_tables': generates LaTeX regression tables for final paper
 'stage_0.r': preliminary regression, to calculated constructed trade openness
