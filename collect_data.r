@@ -4,10 +4,10 @@
 
 # Load necessary libraries
 library(XLConnect)
-
+library(reshape2)
 # Load in functions from copies of Qian's scripts
 
-
+setwd("C:/Users/pandi/OneDrive/tradeopenness_agriculture")
 ### Read in all data
 #Read in Distance between countries
 dist<-readxl::read_xls('rawdata/dist_cepii.xls')
@@ -24,7 +24,7 @@ write.csv(geo,file='cleandata/geo_cepii.csv',row.names = FALSE) #save cleaned ve
 # Read in Capital Stocks at Current PPPs (2011)
 ck <- readxl::read_xlsx('rawdata/pwt90.xlsx',sheet=3)
 #ck <- # select correct sheet
-ck <- ck[,c('countrycode','country','ck')]
+ck <- ck[,c('countrycode','country','year','ck')]
 ck<-na.omit(ck)
 print(head(ck))
 write.csv(ck,file='cleandata/pwt90.csv',row.names = FALSE) #save cleaned version
@@ -34,9 +34,12 @@ write.csv(ck,file='cleandata/pwt90.csv',row.names = FALSE) #save cleaned version
 pop<- readxl::read_xlsx('rawdata/WPP2017_POP_F01_1_TOTAL_POPULATION_BOTH_SEXES_1.xlsx', sheet = 1)
 col_drop<- c('Index', 'Variant', 'Notes')
 pop<-pop[,!names(pop) %in% col_drop]
+pop <- melt(pop, id.vars= c('Region, subregion, country or area *','Country code'), variable.name='Year', value.name='Population')
 write.csv(pop,file='cleandata/population_data.csv',row.names = FALSE) #save cleaned version
+iso_code<-read.csv('rawdata/wikipedia-iso-country-codes.csv')#wikipedia iso codes list
+pop<-merge(iso_code[,3:4],pop,by.x="Numeric.code",by.y="Country code")
 ### Merge datasets on country and year
-df <- 
+df <- merge(ck,pop,by.x=c("countrycode","country","year"),by.y=c("Alpha.3.code","Region, subregion, country or area *","Year"))
 
 # Save merged df as new .csv file
 write.csv('results/input_data_clean.csv')
