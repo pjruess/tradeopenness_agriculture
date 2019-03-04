@@ -22,3 +22,12 @@ df <- read.csv('results/input_data_clean.csv') # all input data (from collect_da
 
 # Save as new .csv file
 df.to_csv('results/stage_0_results.csv')
+
+
+# Qian process flow
+
+# df1 has columns x, y, and z
+# df 2 look like 
+# panel_IV = function(){
+	# this function does blah blah blah
+# }
