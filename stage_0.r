@@ -57,8 +57,12 @@ df.to_csv('results/stage_0_results.csv')
 # panel_IV = function(){
 	# this function does blah blah blah
 <<<<<<< HEAD
+<<<<<<< HEAD
 # }
 >>>>>>> 7773752f202247569d3eaa3f9445431522652e6f
+=======
+# }
+>>>>>>> 7d69881876ddd8b69f3d3d0056960b31744d36e2
 =======
 # }
 >>>>>>> 7d69881876ddd8b69f3d3d0056960b31744d36e2
