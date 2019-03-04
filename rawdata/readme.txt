@@ -21,9 +21,9 @@ Source: https://population.un.org/wpp/Download/Standard/Population/ - Feb 7, 201
 Data & units: 
 WPP2017_POP_F01_1_TOTAL_POPULATION_BOTH_SEXES.xlsx: Total population for all countries in all years
 
-Trade Openness (World Bank)... ?????
+Trade Openness (World Bank)... 
 Source: http://data.worldbank.org/indicator
-Data: Export, Import, GDP, Trade Openness (already calculated)
+Data: [(Export, Import) they are percentages of GDP], GDP, Trade Openness (already calculated)
 
 Climate Variables (World Bank)... ?????
 Source: http://data.worldbank.org/indicator
