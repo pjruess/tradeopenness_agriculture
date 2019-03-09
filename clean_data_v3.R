@@ -8,27 +8,27 @@ library(reshape2)
 
 # Load in functions from copies of Qian's scripts
 
-setwd("C:/Users/pandi/OneDrive/tradeopenness_agriculture")
+#setwd("C:/Users/pandi/OneDrive/tradeopenness_agriculture")
+
 ### Read in all data
 #Read in Distance between countries
 dist<-readxl::read_xls('rawdata/dist_cepii.xls')
 dist<- dist[,c('iso_o','iso_d','contig','dist', 'distcap')]
-dist<-na.omit(dist)
+#dist<-na.omit(dist)
 print(head(dist))
 write.csv(dist,file='cleandata/dist_cepii.csv',row.names = FALSE) #save cleaned version
 
 #Read in Geometric Variables(Latitude, Longitude, area, dummy variables etc)
 geo<-readxl::read_xls('rawdata/geo_cepii.xls')
 geo<- geo[,c('country','iso3','area','dis_int', 'lat', 'lon','landlocked')]
-geo<-na.omit(geo)
+#geo<-na.omit(geo)
 print(head(geo))
 write.csv(geo,file='cleandata/geo_cepii.csv',row.names = FALSE) #save cleaned version
 
 # Read in Capital Stocks at Current PPPs (2011)
 ck <- readxl::read_xlsx('rawdata/pwt90.xlsx',sheet=3)
-#ck <- # select correct sheet
 ck <- ck[,c('countrycode','country','year','ck')]
-ck<-na.omit(ck)
+#ck<-na.omit(ck)
 print(head(ck))
 write.csv(ck,file='cleandata/pwt90.csv',row.names = FALSE) #save cleaned version
 
@@ -42,15 +42,14 @@ iso_code<-read.csv('rawdata/wikipedia-iso-country-codes.csv')#wikipedia iso code
 pop<-merge(iso_code[,3:4],pop,by.x="Numeric.code",by.y="Country code")
 
 #Read in Export and Import to Calculate Real Trade Openness (Import and Export data are % of GDP)
-
 exp<-read.csv(file = 'rawdata/Exports_world_bank.csv')
 names(exp)<-sub('X','',names(exp))
 imp<-read.csv(file = 'rawdata/Imports_world_bank.csv')
 names(imp)<-sub('X','',names(imp))
 exp <- melt(exp, id.vars= c('CountryName','CountryCode'), variable.name='Year', value.name='Exports')
 imp <- melt(imp, id.vars= c('CountryName','CountryCode'), variable.name='Year', value.name='Imports')
-exp<-na.omit(exp)
-imp<-na.omit(imp)
+#exp<-na.omit(exp)
+#imp<-na.omit(imp)
 Real_TO<-merge(exp,imp,by=c("CountryName","CountryCode", 'Year'))
 TO<-(Real_TO[,4]+Real_TO[,5])/100
 Real_TO<-cbind(Real_TO,TO)
@@ -58,23 +57,23 @@ col_drop<- c('Exports', 'Imports')
 Real_TO<-Real_TO[,!names(Real_TO) %in% col_drop]
 
 #Read in temperature data
-setwd("C:/Users/pandi/OneDrive/tradeopenness_agriculture/rawdata/Temperature")
-temp_files<-list.files(pattern= "*.csv")
+temp_path <- 'rawdata/Temperature'
+temp_files <- list.files(path=temp_path,pattern= "*.csv")
+temp_files <- lapply(temp_files, function(x) paste(temp_path,x,sep='/')) #list of file names
 temp<-do.call(rbind, lapply(temp_files, function(x) read.csv(x, stringsAsFactors = FALSE)))
-names(temp)<-sub('X.','',names(temp))
+names(temp) <- sub('X.','',names(temp))
 temp=aggregate(x=temp$tas,by=list(temp$Country,temp$Year),FUN='mean')
-colnames(temp)<-c('Country_iso','Year','Temperature')
-setwd("C:/Users/pandi/OneDrive/tradeopenness_agriculture")
+colnames(temp) <- c('Country_iso','Year','Temperature')
 write.csv(temp,file='rawdata/temperature_data.csv',row.names = FALSE)
 
 #Read in rainfall data
-setwd("C:/Users/pandi/OneDrive/tradeopenness_agriculture/rawdata/Rainfall")
-rf_files<-list.files(pattern= "*.csv")
+rf_path <- 'rawdata/Rainfall'
+rf_files <- list.files(path=rf_path,pattern= "*.csv")
+rf_files <- lapply(rf_files, function(x) paste(rf_path,x,sep='/')) #list of file names
 rf<-do.call(rbind, lapply(rf_files, function(x) read.csv(x, stringsAsFactors = FALSE)))
-names(rf)<-sub('X.','',names(rf))
+names(rf) <- sub('X.','',names(rf))
 rf=aggregate(x=rf$pr,by=list(rf$Country,rf$Year),FUN='mean')
-colnames(rf)<-c('Country_iso','Year','Rainfall')
-setwd("C:/Users/pandi/OneDrive/tradeopenness_agriculture")
+colnames(rf) <- c('Country_iso','Year','Rainfall')
 write.csv(rf,file='rawdata/rainfall_data.csv',row.names = FALSE)
 
 ### Merge datasets on country and year
@@ -84,5 +83,6 @@ df <- merge(df,dist,by.x=c("countrycode"),by.y=c("iso_o"))
 df <- merge(df,Real_TO,by.x=c("countrycode","country","year"),by.y=c("CountryCode",'CountryName','Year'))
 df <- merge(df,temp,by.x=c("countrycode","year"),by.y=c("Country_iso",'Year'))
 df <- merge(df,rf,by.x=c("countrycode","year"),by.y=c("Country_iso",'Year'))
+
 # Save merged df as new .csv file
 write.csv(df,file='results/input_data_clean.csv',row.names = FALSE)
