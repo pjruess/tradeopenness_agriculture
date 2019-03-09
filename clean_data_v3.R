@@ -66,6 +66,7 @@ temp=aggregate(x=temp$tas,by=list(temp$Country,temp$Year),FUN='mean')
 colnames(temp)<-c('Country_iso','Year','Temperature')
 setwd("C:/Users/pandi/OneDrive/tradeopenness_agriculture")
 write.csv(temp,file='rawdata/temperature_data.csv',row.names = FALSE)
+
 #Read in rainfall data
 setwd("C:/Users/pandi/OneDrive/tradeopenness_agriculture/rawdata/Rainfall")
 rf_files<-list.files(pattern= "*.csv")
@@ -75,6 +76,7 @@ rf=aggregate(x=rf$pr,by=list(rf$Country,rf$Year),FUN='mean')
 colnames(rf)<-c('Country_iso','Year','Rainfall')
 setwd("C:/Users/pandi/OneDrive/tradeopenness_agriculture")
 write.csv(rf,file='rawdata/rainfall_data.csv',row.names = FALSE)
+
 ### Merge datasets on country and year
 df <- merge(ck,pop,by.x=c("countrycode","country","year"),by.y=c("Alpha.3.code","Region, subregion, country or area *","Year"))
 df <- merge(df,geo,by.x=c("countrycode","country"),by.y=c("iso3","country"))
