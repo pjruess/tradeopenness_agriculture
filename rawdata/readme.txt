@@ -34,3 +34,13 @@ Source: http://www.fao.org/faostat/en/#data/QC
 Data: Area Harvested, Yield, Production Quantity (Period: 1961-2017)
 Production_Crops_E_All_Data.csv
 Units: Area Harvested: Hectares, Yield: Hectogramme/Hectare, Production Quantity: Tonnes 
+
+Regional Trade Agreements 
+Source: http://rtais.wto.org/UI/PublicMaintainRTAHome.aspx
+Data: Regional Trade Agreements of Goods and Services between all countries
+File: AgreementsList.xlsx
+
+World Trade Organization Accessions
+Source: https://www.wto.org/english/thewto_e/whatis_e/tif_e/org6_e.htm
+Data: World Trade Organization members and observers since July 29, 2016. If no membership date, country is an observer. 
+File: mem-obs-list.xlsx
