@@ -5,10 +5,9 @@
 # Load necessary libraries
 library(XLConnect)
 library(reshape2)
-
+library(data.table)
+library(dplyr)
 # Load in functions from copies of Qian's scripts
-
-#setwd("C:/Users/pandi/OneDrive/tradeopenness_agriculture")
 
 ### Read in all data
 #Read in Distance between countries
@@ -76,6 +75,23 @@ rf=aggregate(x=rf$pr,by=list(rf$Country,rf$Year),FUN='mean')
 colnames(rf) <- c('Country_iso','Year','Rainfall')
 write.csv(rf,file='rawdata/rainfall_data.csv',row.names = FALSE)
 
+#Read in wto data
+wto<-read.csv(file = "rawdata/wto_new.csv")
+yrs<-1995:2016
+tmp <- as.data.frame(matrix(0,nrow=(nrow(wto)*length(yrs)),ncol=ncol(wto)-2))
+index <- rep(seq_len(nrow(wto)), each = length(yrs))
+con_repeated<-as.character(wto[,'Members'])
+iso_repeated<-as.character(wto[,'ISO'])
+colnames(tmp)<- c('Members','Year','ISO')
+tmp['Members']<- con_repeated
+tmp<-tmp[order(tmp$Members),]
+tmp['ISO']<-iso_repeated
+tmp<-tmp[order(tmp$ISO),]
+tmp['Year']<-rep(yrs,nrow(wto))
+tmp['wto']<-0
+for (tmp$Members == wto$Members && tmp$Year >= wto$Year) tmp['wto']<-1
+
+#,iso_repeated)
 ### Merge datasets on country and year
 df <- merge(ck,pop,by.x=c("countrycode","country","year"),by.y=c("Alpha.3.code","Region, subregion, country or area *","Year"))
 df <- merge(df,geo,by.x=c("countrycode","country"),by.y=c("iso3","country"))
