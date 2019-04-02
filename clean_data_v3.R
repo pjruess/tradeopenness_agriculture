@@ -7,6 +7,7 @@ library(XLConnect)
 library(reshape2)
 library(data.table)
 library(dplyr)
+library(gtools)
 # Load in functions from copies of Qian's scripts
 
 ### Read in all data
@@ -33,13 +34,13 @@ write.csv(ck,file='cleandata/pwt90.csv',row.names = FALSE) #save cleaned version
 
 # Read in Population data(in thousands)...
 pop<- readxl::read_xlsx('rawdata/WPP2017_POP_F01_1_TOTAL_POPULATION_BOTH_SEXES_1.xlsx', sheet = 1)
+colnames(pop)[2]<-"iso"
 col_drop<- c('Index', 'Variant', 'Notes')
 pop<-pop[,!names(pop) %in% col_drop]
 pop <- melt(pop, id.vars= c('Region, subregion, country or area *','Country code'), variable.name='Year', value.name='Population')
 write.csv(pop,file='cleandata/population_data.csv',row.names = FALSE) #save cleaned version
 iso_code<-read.csv('rawdata/wikipedia-iso-country-codes.csv')#wikipedia iso codes list
 pop<-merge(iso_code[,3:4],pop,by.x="Numeric.code",by.y="Country code")
-
 #Read in Export and Import to Calculate Real Trade Openness (Import and Export data are % of GDP)
 exp<-read.csv(file = 'rawdata/Exports_world_bank.csv')
 names(exp)<-sub('X','',names(exp))
@@ -84,14 +85,17 @@ con_repeated<-as.character(wto[,'Members'])
 iso_repeated<-as.character(wto[,'ISO'])
 colnames(tmp)<- c('Members','Year','ISO')
 tmp['Members']<- con_repeated
-tmp<-tmp[order(tmp$Members),]
 tmp['ISO']<-iso_repeated
-tmp<-tmp[order(tmp$ISO),]
+tmp<-tmp[order(tmp[,1]),]
+rownames(tmp)<- NULL
 tmp['Year']<-rep(yrs,nrow(wto))
-tmp['wto']<-0
-for (tmp$Members == wto$Members && tmp$Year >= wto$Year) tmp['wto']<-1
-
-#,iso_repeated)
+wto1<- wto %>% select(Members, Year,ISO) %>%
+  rename(Year1 = Year)
+wto_com <- right_join(wto1, tmp, by = c("Members","ISO")) %>% 
+  mutate(wto_o= ifelse(Year >= Year1, 1, 0))
+wto_com<-wto_com[,-2]
+#Read in wto data
+rta<-read.csv(file = "rawdata/rta.csv")
 ### Merge datasets on country and year
 df <- merge(ck,pop,by.x=c("countrycode","country","year"),by.y=c("Alpha.3.code","Region, subregion, country or area *","Year"))
 df <- merge(df,geo,by.x=c("countrycode","country"),by.y=c("iso3","country"))
@@ -99,6 +103,21 @@ df <- merge(df,dist,by.x=c("countrycode"),by.y=c("iso_o"))
 df <- merge(df,Real_TO,by.x=c("countrycode","country","year"),by.y=c("CountryCode",'CountryName','Year'))
 df <- merge(df,temp,by.x=c("countrycode","year"),by.y=c("Country_iso",'Year'))
 df <- merge(df,rf,by.x=c("countrycode","year"),by.y=c("Country_iso",'Year'))
-
+df<-df[which(df$year==1995:2016),]
+df<-merge(df,wto_com,by.x=c("countrycode","year"),by.y=c("ISO",'Year'))
+df<-df[,-19]
+df_sub<- df %>% select(iso_d, year) %>%
+  rename(ISO=iso_d)
+wto_sub_com <- right_join(wto1,df_sub, by = "ISO") %>%
+  mutate(wto_d = ifelse(year>= Year1, 1, 0))
+wto_sub_com<-wto_sub_com[,-c(1,4)]
+df$wto_d<-wto_sub_com$wto_d
+df<-merge(df,rta,by.x=c("countrycode","iso_d","year"),by.y=c("iso_o","iso_d",'Year'))
+df<-merge(df,pop[,c("iso","Year","Population")],by.x=c("iso_d","year"),by.y=c("iso",'Year'))
+df<-df[,-6]
+colnames(df)[6]<-"pop_o"
+colnames(df)[21]<-"pop_d"
+colnames(df)[3]<-"iso_o"
+df<-df[,-4]
 # Save merged df as new .csv file
 write.csv(df,file='results/input_data_clean.csv',row.names = FALSE)
