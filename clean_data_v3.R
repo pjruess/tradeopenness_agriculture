@@ -34,13 +34,13 @@ write.csv(ck,file='cleandata/pwt90.csv',row.names = FALSE) #save cleaned version
 
 # Read in Population data(in thousands)...
 pop<- readxl::read_xlsx('rawdata/WPP2017_POP_F01_1_TOTAL_POPULATION_BOTH_SEXES_1.xlsx', sheet = 1)
-colnames(pop)[2]<-"iso"
 col_drop<- c('Index', 'Variant', 'Notes')
 pop<-pop[,!names(pop) %in% col_drop]
 pop <- melt(pop, id.vars= c('Region, subregion, country or area *','Country code'), variable.name='Year', value.name='Population')
 write.csv(pop,file='cleandata/population_data.csv',row.names = FALSE) #save cleaned version
 iso_code<-read.csv('rawdata/wikipedia-iso-country-codes.csv')#wikipedia iso codes list
 pop<-merge(iso_code[,3:4],pop,by.x="Numeric.code",by.y="Country code")
+names(pop)[names(pop)=="Alpha.3.code"]<-'iso'
 #Read in Export and Import to Calculate Real Trade Openness (Import and Export data are % of GDP)
 exp<-read.csv(file = 'rawdata/Exports_world_bank.csv')
 names(exp)<-sub('X','',names(exp))
@@ -97,7 +97,7 @@ wto_com<-wto_com[,-2]
 #Read in wto data
 rta<-read.csv(file = "rawdata/rta.csv")
 ### Merge datasets on country and year
-df <- merge(ck,pop,by.x=c("countrycode","country","year"),by.y=c("Alpha.3.code","Region, subregion, country or area *","Year"))
+df <- merge(ck,pop,by.x=c("countrycode","country","year"),by.y=c("iso","Region, subregion, country or area *","Year"))
 df <- merge(df,geo,by.x=c("countrycode","country"),by.y=c("iso3","country"))
 df <- merge(df,dist,by.x=c("countrycode"),by.y=c("iso_o"))
 df <- merge(df,Real_TO,by.x=c("countrycode","country","year"),by.y=c("CountryCode",'CountryName','Year'))
@@ -119,5 +119,7 @@ colnames(df)[6]<-"pop_o"
 colnames(df)[21]<-"pop_d"
 colnames(df)[3]<-"iso_o"
 df<-df[,-4]
+colnames(df)[16]<-"rainfall"
+colnames(df)[15]<-"temperature"
 # Save merged df as new .csv file
 write.csv(df,file='results/input_data_clean.csv',row.names = FALSE)
