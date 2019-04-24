@@ -1,0 +1,208 @@
+{\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang1033{\fonttbl{\f0\fnil\fcharset0 Calibri;}}
+{\*\generator Riched20 10.0.17134}\viewkind4\uc1 
+\pard\sa200\sl276\slmult1\f0\fs22\lang9 predopen <- function(fo, y_bigeo)\{\par
+  # y_bigeo = df1_curr\par
+  hat_open <- as.data.frame(predict(fo, newdata = y_bigeo))\par
+  pred <- cbind(y_bigeo[,1:3], hat_open)\par
+  names(pred)[4] <- "log_hat_open"\par
+  pred$hat_open <- exp(pred$log_hat_open)\par
+  hat_totalopen <- sqldf("SELECT iso_o,Year, sum(hat_open)\par
+                         FROM pred\par
+                         GROUP BY iso_o, Year")\par
+  names(hat_totalopen) <- c("ISO", "Year","openness_hat")\par
+  #write.csv(hat_totalopen,"hat_totalopen.csv", row.names = F)\par
+  return(hat_totalopen)\par
+\}\par
+*****#####******\par
+# merge df2 with instrument for curr_year, return list(the final version of df2, the model to predict instrument)\par
+get_df2_final <- function(df1_all, df2_all,  formula1)\{\par
+  df1_curr = df1_all\par
+  #df2_curr = subset(df2_all, Year == curr_year) \par
+  #formula1 = log(biopenness) ~ log(dist) + log(pop_o) + log(area_o) + log(pop_d) + log(area_d) + landlocked + contig*(1+log(dist) + log(pop_o) + log(area_o) + log(pop_d) + log(area_d) + landlocked)\par
+  fo <- lm(formula = formula1, data = df1_curr)\par
+  hat_totalopen <- predopen(fo, df1_curr)\par
+  df2_curr = merge(df2_all, hat_totalopen, by = c("ISO","Year"))\par
+  return(list(df2_curr, fo))\par
+\}\par
+*****#####******\par
+# input: a list of df2, each df for each year\par
+# output: a list of all the first stage for IV model, each for each dependent variable\par
+get_first_stage <- function(df2_final, dependenVar) \{\par
+  result = list()\par
+  df2_panel = do.call(rbind, df2_final)\par
+  selects = c("latitude")\par
+  selects_collapse <- paste(selects, collapse = "+")\par
+  selects_interaction <- paste(sapply(selects,function(x) paste("factor(Year)*",x, sep="")), collapse="+")\par
+  formula3 = paste("openness_real ~  openness_hat + log(Land) + log(Pop) +", selects_collapse,"+factor(Year)+factor(Year)*log(Land)+factor(Year)*log(Pop)+",selects_interaction,sep = "")\par
+  for(dv in dependentVar) \{\par
+    dv\par
+    y_df2 = df2_panel[, -(setdiff(dependentVar, dv))]\par
+    names(y_df2)[dependentVar[1]] <- "value"\par
+    y_df2$value[y_df2$value==0] = NA\par
+    y_df2 <- na.omit(y_df2)\par
+    fs3 <- lm(formula = formula3, data = (y_df2))\par
+    result[[dv-dependentVar[1]+1]] = fs3\par
+  \}\par
+  return(result)\par
+\}\par
+******######******\par
+get_panel_res_simple <- function(df2_final,dv, dependentVar, formula2, fo, df1_all) \{\par
+  # fo: bilateral model for panel\par
+  # output:\par
+  # df mXn, m is # of independent variable, n is # of dependent variable\par
+  \par
+  formula = formula2\par
+  formula = sub("value",colnames(df2_final)[[dv]], formula)\par
+  #y_df2$value[y_df2$value==0] = NA\par
+  #y_df2 <- na.omit(y_df2)\par
+  \par
+  IVo <- ivreg(formula, data = df2_final)\par
+  #summary(IVo, diagnostic=T)\par
+  \par
+  return(IVo)\par
+  \par
+\}\par
+\par
+get_panel_res <- function(df2_final,dv, dependentVar, formula2, fo, df1_all, is_simple) \{\par
+  # fo: bilateral model for panel\par
+  # output:\par
+  # df mXn, m is # of independent variable, n is # of dependent variable\par
+  # dv = dependentVar[[1]]\par
+  # fo = model_instrument\par
+  # formula2 = pa_formulas[[version]][[stage]]\par
+    #y_df2 = df2_final[, -(setdiff(dependentVar, dv))]\par
+    #names(y_df2)[dependentVar[1]] <- "value"\par
+    formula = formula2\par
+    formula = sub("value",colnames(df2_final)[[dv]], formula)\par
+    #y_df2$value[y_df2$value==0] = NA\par
+    #y_df2 <- na.omit(y_df2)\par
+    \par
+    IVo <- ivreg(formula, data = df2_final)\par
+    #summary(IVo, diagnostic=T)\par
+    model = IVo\par
+    \par
+    if(is_simple) \{\par
+      result = data.frame(summary(model)$coefficient)\par
+      colnames(result) = c("coef", "sd", "t", "p")\par
+      result$sig = sapply(result$p, significant)\par
+    \} else \{\par
+    a_sigma <- vcov(fo)  # variance\par
+    n = length(fo$coefficients)\par
+    a0 = fo$coefficients\par
+    #da <- rep(0, length = n)\par
+    da = a0*0.0001\par
+    b0 = IVo$coefficients\par
+    b_sigma <-  vcov(IVo) # variance \par
+    \par
+    # calculate db/da\par
+    b_coef <- lapply(1:n, function(x) calculate_b(x,fo, da, df1_all, df2_final, formula))\par
+\par
+    B_coef <- do.call(cbind, b_coef)\par
+  \par
+    db <- apply(B_coef,2,function(x) x - b0)  \par
+    dbda <- apply(db,1,function(x) x/da)\par
+    #dbda1 = na.omit(dbda)\par
+    b_sigma_da <- t(dbda) %*% a_sigma %*% dbda\par
+    b_sigma_new = (diag(b_sigma) + diag(b_sigma_da))^0.5 ## standard error\par
+    \par
+    #sd = (diag(b_sigma))^0.5\par
+    #(sd-b_sigma_new)/sd\par
+    result = get_var_table_helper(IVo, b_sigma_new)\par
+    \}\par
+  return(list(result, model))\par
+  \par
+\}\par
+######******#########\par
+IV_sd <- function(fo, IVo, y_df1, y_df2, formula2, i, nvalue = nvalue)\{\par
+  a_sigma <- vcov(fo)  # variance\par
+  n = length(fo$coefficients)\par
+  a0 = fo$coefficients\par
+  #da <- rep(0, length = n)\par
+  da = a0*0.001\par
+  b0 = IVo$coefficients\par
+  b_sigma <- vcov(IVo) # variance \par
+  \par
+  b_coef <- list()\par
+  #b_stand <- list()\par
+  for(j in 1:n)\{\par
+    fs_a <- fo\par
+    fs_a$coefficients[j] <- fs_a$coefficients[j] +da[j]\par
+    hat_totalopen <- predopen(fs_a, y_df1)\par
+    y_df2_new <- merge(y_df2_i[[i]], hat_totalopen, by = "ISO")\par
+    names(y_df2_new)[nvalue] <- "value"\par
+    IV <- ivreg(formula2, data = y_df2_new )\par
+    #summary(ss)\par
+    b_coef[[j]] = IV$coefficients\par
+    #b_stand[[i]] =  summary(ss)$coefficients[,2]\par
+  \}\par
+  \par
+  B_coef <- do.call(cbind, b_coef )\par
+  colnames(B_coef) <- names(fo$coefficients)\par
+  db <- apply(B_coef,2,function(x) x - b0)  \par
+  dbda <- apply(db,1,function(x) x/da)\par
+  b_sigma_da <- t(dbda) %*% a_sigma %*% dbda\par
+  b_sigma_new <- b_sigma + b_sigma_da\par
+  b_stand_new <- (diag(b_sigma_new))^0.5\par
+  b_stand_old <- (diag(b_sigma))^0.5\par
+  ratio <- b_stand_new/b_stand_old\par
+  t <- b0/b_stand_new\par
+  df <- IVo$df.residual\par
+  t1 <- -abs(t) \par
+  p <- 2*pt(t1,df)\par
+  result <- data.frame(coef = b0,  sd_new = b_stand_new, sd_o = b_stand_old, ratio =ratio, t = t, p=p )\par
+  return(result)\par
+\}\par
+#######*****#######\par
+######################## significant level notation\par
+## 0.01 ***\par
+## 0.05 **\par
+## 0.1 *\par
+significant <- function(x)\{\par
+  if(!is.na(x) & x < 0.1)\{\par
+    if (x < 0.05) \{\par
+      if ( x < 0.01) \{\par
+        y = "***"\par
+      \}\par
+      else \par
+        y = " **"\par
+    \}\par
+    else\par
+      y = "  *"\par
+  \}\par
+  else\par
+    y = ""\par
+  return (y)\par
+\}\par
+#####*****######\par
+extract_results = function(IVmodel, var_table, dependentVar, rns, n_F, version, stage) \{\par
+  ## write main tables\par
+  #rns = c("openness_real:com_adv", "openness_real", "com_adv")\par
+  #rns = c("openness_real")\par
+  final_result = matrix(0,1, length(dependentVar))\par
+  for(n in rns) \{\par
+    coef2 = sapply(var_table, function(x) paste0(round(x[n,1],2), x[n,5], sep=""))\par
+    sd2 = sapply(var_table, function(x) paste0("(",round(x[n,2],2),")", sep=""))\par
+    final_result = rbind(final_result, coef2, sd2)\par
+    rownames(final_result)[dim(final_result)[1]-1] = n\par
+    rownames(final_result)[dim(final_result)[1]] = paste(n,"_sd", sep="")\par
+  \}\par
+  final_result = final_result[-1,]\par
+\par
+  for(i in 1:n_F) \{\par
+    F =  sapply(IVmodel, function(x) paste0(round(summary(x, diagnostic=T)$diagnostic[i,3],2), significant(summary(x, diagnostic=T)$diagnostic[i,4]), sep=""))\par
+   # F2 =  sapply(IVmodel, function(x) paste0(round(summary(x, diagnostic=T)$diagnostic[3,3],2), significant(summary(x, diagnostic=T)$diagnostic[3,4]), sep=""))\par
+    final_result = rbind(final_result, F)\par
+    rownames(final_result)[dim(final_result)[1]] = rownames(summary(IVmodel[[1]], diagnostic=T)$diagnostic)[i]\par
+  \}\par
+  \par
+  n_obs = sapply(IVmodel, function(x) x$nobs)\par
+  final_result = rbind(final_result, n_obs)\par
+  cn = colnames(df2_all[dependentVar])\par
+  colnames(final_result) = cn\par
+  #final_result\par
+  \par
+  return(final_result)\par
+  \par
+\}\par
+}
+ 
