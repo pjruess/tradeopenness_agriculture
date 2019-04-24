@@ -8,27 +8,24 @@ library(reshape2)
 library(data.table)
 library(dplyr)
 library(gtools)
-# Load in functions from copies of Qian's scripts
 
 ### Read in all data
+
 #Read in Distance between countries
 dist<-readxl::read_xls('rawdata/dist_cepii.xls')
 dist<- dist[,c('iso_o','iso_d','contig','dist', 'distcap')]
-#dist<-na.omit(dist)
 print(head(dist))
 write.csv(dist,file='cleandata/dist_cepii.csv',row.names = FALSE) #save cleaned version
 
 #Read in Geometric Variables(Latitude, Longitude, area, dummy variables etc)
 geo<-readxl::read_xls('rawdata/geo_cepii.xls')
 geo<- geo[,c('country','iso3','area','dis_int', 'lat', 'lon','landlocked')]
-#geo<-na.omit(geo)
 print(head(geo))
 write.csv(geo,file='cleandata/geo_cepii.csv',row.names = FALSE) #save cleaned version
 
 # Read in Capital Stocks at Current PPPs (2011)
 ck <- readxl::read_xlsx('rawdata/pwt90.xlsx',sheet=3)
 ck <- ck[,c('countrycode','country','year','ck')]
-#ck<-na.omit(ck)
 print(head(ck))
 write.csv(ck,file='cleandata/pwt90.csv',row.names = FALSE) #save cleaned version
 
@@ -41,6 +38,7 @@ pop <- melt(pop, id.vars= c('Region, subregion, country or area *','Country code
 write.csv(pop,file='cleandata/population_data.csv',row.names = FALSE) #save cleaned version
 iso_code<-read.csv('rawdata/wikipedia-iso-country-codes.csv')#wikipedia iso codes list
 pop<-merge(iso_code[,3:4],pop,by.x="Numeric.code",by.y="Country code")
+
 #Read in Export and Import to Calculate Real Trade Openness (Import and Export data are % of GDP)
 exp<-read.csv(file = 'rawdata/Exports_world_bank.csv')
 names(exp)<-sub('X','',names(exp))
@@ -48,8 +46,6 @@ imp<-read.csv(file = 'rawdata/Imports_world_bank.csv')
 names(imp)<-sub('X','',names(imp))
 exp <- melt(exp, id.vars= c('CountryName','CountryCode'), variable.name='Year', value.name='Exports')
 imp <- melt(imp, id.vars= c('CountryName','CountryCode'), variable.name='Year', value.name='Imports')
-#exp<-na.omit(exp)
-#imp<-na.omit(imp)
 Real_TO<-merge(exp,imp,by=c("CountryName","CountryCode", 'Year'))
 TO<-(Real_TO[,4]+Real_TO[,5])/100
 Real_TO<-cbind(Real_TO,TO)
@@ -94,8 +90,10 @@ wto1<- wto %>% select(Members, Year,ISO) %>%
 wto_com <- right_join(wto1, tmp, by = c("Members","ISO")) %>% 
   mutate(wto_o= ifelse(Year >= Year1, 1, 0))
 wto_com<-wto_com[,-2]
-#Read in wto data
+
+#Read in rta data
 rta<-read.csv(file = "rawdata/rta.csv")
+
 ### Merge datasets on country and year
 df <- merge(ck,pop,by.x=c("countrycode","country","year"),by.y=c("Alpha.3.code","Region, subregion, country or area *","Year"))
 df <- merge(df,geo,by.x=c("countrycode","country"),by.y=c("iso3","country"))
@@ -119,5 +117,6 @@ colnames(df)[6]<-"pop_o"
 colnames(df)[21]<-"pop_d"
 colnames(df)[3]<-"iso_o"
 df<-df[,-4]
+
 # Save merged df as new .csv file
-write.csv(df,file='results/input_data_clean.csv',row.names = FALSE)
+write.csv(df,file='cleandata/input_data_clean.csv',row.names = FALSE)
