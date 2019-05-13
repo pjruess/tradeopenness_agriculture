@@ -11,8 +11,8 @@ library(dplyr)
 
 # Read in geographic variables
 df <- read.csv('cleandata/input_data_clean.csv') # all input data (from collect_data.r script)
-print(head(df))
-break
+
+### DF HAS EXPORT AND IMPORT DATA ??? ###
 
 ### Read Bilateral trade data
 
