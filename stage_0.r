@@ -21,16 +21,29 @@ bi_trade<-read.csv(file = 'rawdata/DOT_03-01-2019 14-24-34-36_timeSeries/DOT_03-
 bi_trade<-subset(bi_trade, Indicator.Name!="Goods, Value of Trade Balance, US Dollars")
 bi_trade<-bi_trade[,!names(bi_trade) %in% c('Attribute')]
 colnames(bi_trade)[1]<-'Country.Name'
-names(bi_trade)<-sub('X','',names(bi_trade))
+names(bi_trade)<-gsub('X','',names(bi_trade))
 bi_trade <- melt(bi_trade, id.vars= c('Country.Name', 'Country.Code' ,'Indicator.Name','Indicator.Code', 'Counterpart.Country.Name','Counterpart.Country.Code'), variable.name='Year', value.name='ExportsandImports')
 bi_trade$ExportsandImports<-as.integer(bi_trade$ExportsandImports)
+bi_trade<-bi_trade[which(bi_trade$Year==2002:2016),]
+bi_trade[is.na(bi_trade)]<-0
 bi_trade<-bi_trade %>%
   group_by(Country.Name,Country.Code,Counterpart.Country.Name,Counterpart.Country.Code,Year) %>%
   summarize(bi_trade=sum(as.numeric(ExportsandImports)))
-bi_trade<-bi_trade[which(bi_trade$Year==1995:2016),]
-#bi_trade<-na.omit(bi_trade)
 
-# 
+IMF_codes<-read.csv('rawdata/IMF_codes.csv')#IMF list
+bi_trade<-merge(IMF_codes,bi_trade,by.x="IMF.Code",by.y="Country.Code")
+colnames(bi_trade)[1]<-'Country.IMF.Code'
+colnames(bi_trade)[2]<-'Country.Code'
+bi_trade<-merge(IMF_codes,bi_trade,by.x="IMF.Code",by.y="Counterpart.Country.Code")
+colnames(bi_trade)[1]<-'Counterpart.Country.IMF.Code'
+colnames(bi_trade)[2]<-'Counterpart.Country.Code'
+bi_trade<-bi_trade[-c(1,3)]
+bi_trade<-bi_trade[c(2,3,1,4:6)]
+#building new dataframe for Stage 1 analysis
+df2<-df[c(1:10)]
+df2<-df2[-c(2,6)]
+df2<-unique(df2)
+
 pa_formula1_1 = "log(biopenness) ~ factor(iso_o)+factor(iso_d) + factor(Year) + log(dist)*(log(pop_o) + log(pop_d)) + contig*(log(pop_o) + log(pop_d) + log(dist)) + wto + rta"
 
 ver1_step1<- lm(formula = pa_formula1_1, data = df)
