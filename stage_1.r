@@ -10,7 +10,8 @@ library(reshape2)
 library(data.table)
 library(dplyr)
 library(sqldf)
-
+library(Matrix)
+cat(rankMatrix(ver1_step1), "\n")
 # Load in functions from copies of Qian's scripts
 #EStimates constructed trade openness
 predopen <- function(fo, y_bigeo){
@@ -31,3 +32,4 @@ predopen <- function(fo, y_bigeo){
 df <- read.csv('cleandata/input_data_clean_stage1.csv') # all input data (from collect_data.r script)
 pa_formula1_1 = "log(TO) ~ openness_hat+ log(AperP) + log(ckperP) + log(pop_o) + rainfall + temperature + factor(iso_o) + factor(year)"
 ver1_step1<- lm(formula = pa_formula1_1, data = df)
+hat_open <- as.data.frame(predict(ver1_step1, newdata = df))
