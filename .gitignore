@@ -4,5 +4,6 @@
 rawdata/DOT_03-01-2019 14-24-34-36_timeSeries
 .RData
 .Rhistory
-results/input_data_clean.csv
+cleandata/input_data_clean.csv
+cleandata/bilateral_trade_clean.csv
 

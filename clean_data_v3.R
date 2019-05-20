@@ -8,27 +8,24 @@ library(reshape2)
 library(data.table)
 library(dplyr)
 library(gtools)
-# Load in functions from copies of Qian's scripts
 
 ### Read in all data
+
 #Read in Distance between countries
 dist<-readxl::read_xls('rawdata/dist_cepii.xls')
 dist<- dist[,c('iso_o','iso_d','contig','dist', 'distcap')]
-#dist<-na.omit(dist)
 print(head(dist))
 write.csv(dist,file='cleandata/dist_cepii.csv',row.names = FALSE) #save cleaned version
 
 #Read in Geometric Variables(Latitude, Longitude, area, dummy variables etc)
 geo<-readxl::read_xls('rawdata/geo_cepii.xls')
 geo<- geo[,c('country','iso3','area','dis_int', 'lat', 'lon','landlocked')]
-#geo<-na.omit(geo)
 print(head(geo))
 write.csv(geo,file='cleandata/geo_cepii.csv',row.names = FALSE) #save cleaned version
 
 # Read in Capital Stocks at Current PPPs (2011)
 ck <- readxl::read_xlsx('rawdata/pwt90.xlsx',sheet=3)
 ck <- ck[,c('countrycode','country','year','ck')]
-#ck<-na.omit(ck)
 print(head(ck))
 write.csv(ck,file='cleandata/pwt90.csv',row.names = FALSE) #save cleaned version
 
@@ -49,8 +46,6 @@ imp<-read.csv(file = 'rawdata/Imports_world_bank.csv')
 names(imp)<-gsub('X','',names(imp))
 exp <- melt(exp, id.vars= c('CountryName','CountryCode'), variable.name='Year', value.name='Exports')
 imp <- melt(imp, id.vars= c('CountryName','CountryCode'), variable.name='Year', value.name='Imports')
-#exp<-na.omit(exp)
-#imp<-na.omit(imp)
 Real_TO<-merge(exp,imp,by=c("CountryName","CountryCode", 'Year'))
 TO<-(Real_TO[,4]+Real_TO[,5])/100
 Real_TO<-cbind(Real_TO,TO)
@@ -125,4 +120,4 @@ df<-df[,-4]
 colnames(df)[16]<-"rainfall"
 colnames(df)[15]<-"temperature"
 # Save merged df as new .csv file
-write.csv(df,file='results/input_data_clean.csv',row.names = FALSE)
+write.csv(df,file='cleandata/input_data_clean.csv',row.names = FALSE)
