@@ -12,7 +12,14 @@
 
 # Read in all data
 df <- read.csv('results/input_data_clean_stage2.csv') # all data AND calculated AND estimated trade openness (from stage_1.r)
+nutrients<-read.csv('cleandata/main_df2_wq_all.csv')
+nutrients<-nutrients[-c(3:5)]
+df<-merge(df,nutrients,by.x=c('iso_o','year'),by.y=c('ISO','Year'))
+df<-na.omit(df)
 
+pa_formula1_2 = "log(N) ~ hat_realopen + log(AperP) + log(ckperP) + log(pop_o) + rainfall + temperature + factor(iso_o) + factor(year)"
+ver1_step2<- lm(formula = pa_formula1_2, data = df)
+df<-df[which(df[c(13)]!=0),]
 # Regress agricultural variables on estimated real trade openness + control variables, country and time fixed effects, and error (same as stage 1)
 
 
