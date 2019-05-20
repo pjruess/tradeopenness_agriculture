@@ -38,7 +38,7 @@ write.csv(pop,file='cleandata/population_data.csv',row.names = FALSE) #save clea
 iso_code<-read.csv('rawdata/wikipedia-iso-country-codes.csv')#wikipedia iso codes list
 pop<-merge(iso_code[,3:4],pop,by.x="Numeric.code",by.y="Country code")
 names(pop)[names(pop)=="Alpha.3.code"]<-'iso'
-
+pop$Population<-pop$Population*1000
 #Read in Export and Import to Calculate Real Trade Openness (Import and Export data are % of GDP)
 exp<-read.csv(file = 'rawdata/Exports_world_bank.csv')
 names(exp)<-gsub('X','',names(exp))
