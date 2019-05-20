@@ -120,4 +120,4 @@ df<-df[,-4]
 colnames(df)[16]<-"rainfall"
 colnames(df)[15]<-"temperature"
 # Save merged df as new .csv file
-write.csv(df,file='cleandata/input_data_clean.csv',row.names = FALSE)
+write.csv(df,file='results/input_data_clean.csv',row.names = FALSE)

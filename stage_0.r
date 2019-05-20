@@ -76,13 +76,12 @@ pa_formula1_0 = "log(biopenness) ~ factor(iso_o)+factor(iso_d) + factor(year) + 
 ver1_step0<- lm(formula = pa_formula1_0, data = df)
 hat_totalopen<-predopen(ver1_step0,df)
 #building new dataframe for Stage 1 analysis
-df2<-df[c(1:10)]
-df2<-df2[-c(2,6)]
+df2<-df[-c(2,7:13,17:21)]
 df2<-unique(df2)
 df2<-merge(df2,hat_totalopen,by.x=c('iso_o','year'),by.y=c('ISO','Year'))
 df2$AperP<-df2$area/df2$pop_o
 df2$ckperP<-df2$ck/df2$pop_o
-write.csv(df2,file='cleandata/input_data_clean_stage1.csv',row.names = FALSE)
+write.csv(df2,file='results/input_data_clean_stage1.csv',row.names = FALSE)
 # trade = (geographic variables and time variables, ie. WTO and RTA) (distance, population, dummies, etc.)
 
 
