@@ -39,6 +39,7 @@ iso_code<-read.csv('rawdata/wikipedia-iso-country-codes.csv')#wikipedia iso code
 pop<-merge(iso_code[,3:4],pop,by.x="Numeric.code",by.y="Country code")
 names(pop)[names(pop)=="Alpha.3.code"]<-'iso'
 pop$Population<-pop$Population*1000
+
 #Read in Export and Import to Calculate Real Trade Openness (Import and Export data are % of GDP)
 exp<-read.csv(file = 'rawdata/Exports_world_bank.csv')
 names(exp)<-gsub('X','',names(exp))
@@ -85,29 +86,32 @@ tmp['ISO']<-iso_repeated
 tmp<-tmp[order(tmp[,1]),]
 rownames(tmp)<- NULL
 tmp['Year']<-rep(yrs,nrow(wto))
-wto1<- wto %>% select(Members, Year,ISO) %>%
-  rename(Year1 = Year)
-wto_com <- right_join(wto1, tmp, by = c("Members","ISO")) %>% 
-  mutate(wto_o= ifelse(Year >= Year1, 1, 0))
+wto1<-wto[-c(2,3)]
+wto_com <- left_join(wto1,tmp,by = c("Members","ISO")) %>% mutate(wto_o = 0)
+
+wto_com<- wto_com %>%   mutate(wto_o = ifelse(Year.y >= Year.x, 1, 0))
+
 wto_com<-wto_com[,-2]
 
 #Read in rta data
 rta<-read.csv(file = "rawdata/rta.csv")
 
 ### Merge datasets on country and year
-df <- merge(ck,pop,by.x=c("countrycode","country","year"),by.y=c("iso","Region, subregion, country or area *","Year"))
-df <- merge(df,geo,by.x=c("countrycode","country"),by.y=c("iso3","country"))
-df <- merge(df,dist,by.x=c("countrycode"),by.y=c("iso_o"))
-df <- merge(df,Real_TO,by.x=c("countrycode","country","year"),by.y=c("CountryCode",'CountryName','Year'))
-df <- merge(df,temp,by.x=c("countrycode","year"),by.y=c("Country_iso",'Year'))
-df <- merge(df,rf,by.x=c("countrycode","year"),by.y=c("Country_iso",'Year'))
+df<-merge(rta,dist,by.y=c("countrycode","iso_d","year"),by.x=c("iso_o","iso_d",'Year'))
+# df <- merge(ck,pop,by.x=c("countrycode","country","year"),by.y=c("iso","Region, subregion, country or area *","Year"))
+# df <- merge(df,geo,by.x=c("countrycode","country"),by.y=c("iso3","country"))
+# df <- merge(df,dist,by.x=c("countrycode"),by.y=c("iso_o"))
+# df <- merge(df,Real_TO,by.x=c("countrycode","country","year"),by.y=c("CountryCode",'CountryName','Year'))
+# df <- merge(df,temp,by.x=c("countrycode","year"),by.y=c("Country_iso",'Year'))
+# df <- merge(df,rf,by.x=c("countrycode","year"),by.y=c("Country_iso",'Year'))
 df<-df[which(df$year==1995:2016),]
+colnames(wto_com)[3]<-"Year"
 df<-merge(df,wto_com,by.x=c("countrycode","year"),by.y=c("ISO",'Year'))
 df<-df[,-19]
 df_sub<- df %>% select(iso_d, year) %>%
   rename(ISO=iso_d)
 wto_sub_com <- right_join(wto1,df_sub, by = "ISO") %>%
-  mutate(wto_d = ifelse(year>= Year1, 1, 0))
+  mutate(wto_d = ifelse(year>= Year, 1, 0))
 wto_sub_com<-wto_sub_com[,-c(1,4)]
 df$wto_d<-wto_sub_com$wto_d
 df<-merge(df,rta,by.x=c("countrycode","iso_d","year"),by.y=c("iso_o","iso_d",'Year'))
@@ -119,5 +123,8 @@ colnames(df)[3]<-"iso_o"
 df<-df[,-4]
 colnames(df)[16]<-"rainfall"
 colnames(df)[15]<-"temperature"
+df <- merge(df,geo[,c(2:3)],by.x=c("iso_d"),by.y=c("iso3"))
+colnames(df)[6]<-"area_o"
+colnames(df)[21]<-"area_d"
 # Save merged df as new .csv file
 write.csv(df,file='results/input_data_clean.csv',row.names = FALSE)

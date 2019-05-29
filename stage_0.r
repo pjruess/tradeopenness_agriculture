@@ -27,7 +27,7 @@ predopen <- function(fo, y_bigeo){
 }
 
 # Read in data
-df <- read.csv('cleandata/input_data_clean.csv') # all input data (from collect_data.r script)
+df <- read.csv('results/input_data_clean.csv') # all input data (from collect_data.r script)
 # Calculate bilateral trade from geographic variables and time-variant panel variables (constructed trade openness) 
 #Read Bilateral trade data
 bi_trade<-read.csv(file = 'rawdata/DOT_03-01-2019 14-24-34-36_timeSeries/DOT_03-01-2019 14-24-34-36_timeSeries.csv',stringsAsFactors = FALSE)
@@ -64,20 +64,20 @@ GDP<-GDP[which(GDP$GDP!=0),]
 biopen<-merge(bi_trade,GDP,by.x=c('Country.Code','Year'),by.y=c('Country.Code','Year'))
 biopen<-biopen[-c(5)]
 biopen$biopenness<-biopen$bi_trade/biopen$GDP
-df<-merge(df,biopen,by.x=c('iso_o','iso_d','year'),by.y=c('Country.Code','Counterpart.Country.Code','Year'))
-df<-na.omit(df)
-df<-df[-c(21:22)]
-
+df<-merge(biopen, df, by.y=c('iso_o','iso_d','year'),by.x =c('Country.Code','Counterpart.Country.Code','Year'))
+#df<-na.omit(df)
+df<-df[-c(22:23)]
+df = df[df$iso_o != "LBR" ,]
+df = df[df$iso_o != "LUX" ,]
 #Running stage0 analysis
-pa_formula1_0 = "log(biopenness) ~ factor(iso_o)+factor(iso_d) + factor(year) + log(dist)*(log(pop_o) + log(pop_d)) + contig*(log(pop_o) + log(pop_d) + log(dist)) + wto_o + wto_d + rta"
-
-#ver1_step1<- lm(formula = pa_formula1_1, data = df)
-#pa_formula1_2 = "log(value) ~ openness_real+ log(AperP) + log(ckperP) + log(Pop)+pr +tas  + factor(ISO) + factor(Year) | . - openness_real + openness_hat"
+pa_formula1_0 = "log(biopenness) ~ factor(iso_o)+factor(iso_d) + factor(year) + log(dist)*(log(pop_o) + log(pop_d)) + contig*(log(pop_o) + log(pop_d) + log(dist))"
 ver1_step0<- lm(formula = pa_formula1_0, data = df)
+result0 = data.frame(summary(ver1_step0)$coefficient)
+colnames(result0) = c("coef", "sd", "t", "p")
 hat_totalopen<-predopen(ver1_step0,df)
 #building new dataframe for Stage 1 analysis
-df2<-df[-c(2,7:13,17:21)]
-df2<-unique(df2)
+df2<-df[-c(2,7:13,17:22)]
+df2<-df2[!duplicated(df2[1:2]),]
 df2<-merge(df2,hat_totalopen,by.x=c('iso_o','year'),by.y=c('ISO','Year'))
 df2$AperP<-df2$area/df2$pop_o
 df2$ckperP<-df2$ck/df2$pop_o
